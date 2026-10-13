@@ -9,8 +9,7 @@ namespace RaceDay.API.Models
         public int UserId { get; set; }
         [ForeignKey("Role")]
         public int RoleId { get; set; }
-        public Role? Role { get; set; }
-        [Required]
+        public string Role { get; set; } = "Participant"; // Defaults to Participant
         public string FullName { get; set; } = string.Empty;
         [Required]
         public string Email { get; set; } = string.Empty;

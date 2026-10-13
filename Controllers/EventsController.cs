@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
@@ -16,6 +17,8 @@ namespace RaceDay.API.Controllers
             _context = context;
         }
 
+
+
         // GET: api/events
         [HttpGet]
         public async Task<IActionResult> GetEvents()
@@ -26,6 +29,7 @@ namespace RaceDay.API.Controllers
 
         // POST: api/events
         [HttpPost]
+        [Authorize(Roles = "Organiser")]
         public async Task<IActionResult> CreateEvent([FromBody] Event ev)
         {
             _context.Events.Add(ev);
@@ -34,3 +38,5 @@ namespace RaceDay.API.Controllers
         }
     }
 }
+
+
