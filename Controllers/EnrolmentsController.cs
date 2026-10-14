@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using RaceDay.API.DTOs;
 
 namespace RaceDay.API.Controllers
 {
