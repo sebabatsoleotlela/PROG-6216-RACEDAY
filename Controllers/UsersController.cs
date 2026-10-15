@@ -98,9 +98,9 @@ namespace RaceDay.API.Controllers
 
             var user = new User
             {
-                FullName = dto.FullName,
+                FullName = dto.Username,
                 Email = dto.Email,
-                RoleId = dto.RoleId // 1 for Organiser, 2 for Participant (or adjust per your DB)
+                RoleId = 2// 1 for Organiser, 2 for Participant (or adjust per your DB)
             };
 
             // Hash the password securely
