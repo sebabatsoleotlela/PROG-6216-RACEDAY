@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using RaceDay.API.DTOs;
 
 namespace RaceDay.API.Controllers
 {
@@ -10,6 +12,7 @@ namespace RaceDay.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly RaceDayDbContext _context;
+        private readonly PasswordHasher<User> _passwordHasher = new();
 
         public UsersController(RaceDayDbContext context)
         {
@@ -20,17 +23,64 @@ namespace RaceDay.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users.ToListAsync();
+            var users = await _context.Users.Include(u => u.Role).ToListAsync();
             return Ok(users);
         }
 
-        // POST: api/users
-        [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] User user)
+        // GET: api/users/5 (View Profile)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserProfile(int id)
         {
-            _context.Users.Add(user);
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.UserId == id);
+
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            return Ok(new
+            {
+                user.UserId,
+                user.FullName,
+                user.Email,
+                user.RoleId,
+                RoleName = user.Role != null ? user.Role.RoleName : "Unknown",
+                user.CreatedAt
+            });
+        }
+
+        // PUT: api/users/change-password
+        [HttpPut("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            var user = await _context.Users.FindAsync(dto.UserId);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            // Verify old password
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
+            if (result == PasswordVerificationResult.Failed)
+                return BadRequest(new { message = "Incorrect current password." });
+
+            // Hash new password and save
+            user.PasswordHash = _passwordHasher.HashPassword(user, dto.NewPassword);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetUsers), new { id = user.UserId }, user);
+
+            return Ok(new { message = "Password changed successfully!" });
+        }
+
+        // DELETE: api/users/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "User account deleted successfully." });
         }
     }
 }
