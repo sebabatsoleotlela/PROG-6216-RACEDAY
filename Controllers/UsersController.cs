@@ -23,7 +23,7 @@ namespace RaceDay.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users.Include(u => u.Role).ToListAsync();
+            var users = await _context.Users.ToListAsync();
             return Ok(users);
         }
 
@@ -31,12 +31,13 @@ namespace RaceDay.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserProfile(int id)
         {
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserId == id);
+            var user = await _context.Users.FindAsync(id);
 
             if (user == null)
                 return NotFound(new { message = "User not found." });
+
+            // Map RoleId to a readable role name
+            string roleName = user.RoleId == 1 ? "Organiser" : "Participant";
 
             return Ok(new
             {
@@ -44,7 +45,7 @@ namespace RaceDay.API.Controllers
                 user.FullName,
                 user.Email,
                 user.RoleId,
-                RoleName = user.Role != null ? user.Role.RoleName : "Unknown",
+                RoleName = roleName,
                 user.CreatedAt
             });
         }
