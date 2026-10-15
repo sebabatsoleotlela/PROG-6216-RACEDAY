@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
+using RaceDay.API.DTOs;
 using RaceDay.API.Models;
 
 namespace RaceDay.API.Controllers
@@ -24,13 +25,27 @@ namespace RaceDay.API.Controllers
             return Ok(categories);
         }
 
+
+
         // POST: api/eventcategories
         [HttpPost]
-        public async Task<IActionResult> CreateEventCategory([FromBody] EventCategory category)
+        public async Task<IActionResult> PostEventCategory([FromBody] CreateEventCategoryDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var category = new EventCategory
+            {
+                EventId = dto.EventId,
+                CategoryName = dto.CategoryName,
+                DistanceKm = dto.DistanceKm,
+                EntryFee = dto.EntryFee
+            };
+
             _context.EventCategories.Add(category);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetEventCategories), new { id = category.CategoryId }, category);
+
+            return Ok(new { message = "Event category created successfully!", categoryId = category.CategoryId });
         }
     }
 }
