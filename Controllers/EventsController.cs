@@ -47,7 +47,7 @@ namespace RaceDay.API.Controllers
 
             var raceEvent = new Event
             {
-                EventName = dto.EventName,
+                Title = dto.Title,
                 Location = dto.Location,
                 EventDate = dto.EventDate,
                 Description = dto.Description,
@@ -59,7 +59,6 @@ namespace RaceDay.API.Controllers
 
             return Ok(new { message = "Event created successfully!", eventId = raceEvent.EventId });
         }
-
         // DELETE: api/Events/5 (Organiser deletes an event)
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEvent(int id)
