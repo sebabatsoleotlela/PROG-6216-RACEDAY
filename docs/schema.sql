@@ -37,7 +37,7 @@ CREATE TABLE Events (
 CREATE TABLE EventCategories (
   CategoryId INT IDENTITY(1,1) PRIMARY KEY,
   EventId INT NOT NULL,
-  CategoryName VARCHAR(100) NOT NULL, -- e.g., '10km Road Run', '40km Cycle'
+  CategoryName VARCHAR(100) NOT NULL, 
   DistanceKm DECIMAL(5,2) NOT NULL,
   EntryFee DECIMAL(10,2) DEFAULT 0.00,
   CONSTRAINT FK_Categories_Events FOREIGN KEY (EventId) REFERENCES Events(EventId) 
@@ -62,7 +62,7 @@ CREATE TABLE Enrolments (
 CREATE TABLE Results (
   ResultId INT IDENTITY(1,1) PRIMARY KEY,
   EnrolmentId INT NOT NULL UNIQUE,
-  FinishTime TIME NULL, -- e.g., '00:45:30'
+  FinishTime TIME NULL, 
   OverallPosition INT NULL,
   CategoryPosition INT NULL,
   RecordedAt DATETIME DEFAULT GETDATE(),
@@ -71,26 +71,19 @@ CREATE TABLE Results (
 );
 
 -- SEED DATA SETUP --
--- Seed Roles
 INSERT INTO Roles (RoleName) VALUES ('Organiser'), ('Participant');
 
--- Seed Users (2 Organisers, 2 Participants)
 INSERT INTO Users (RoleId, FullName, Email, PasswordHash) VALUES
 (1, 'Sipho Zulu', 'sipho@raceday.co.za', 'HashedPassword123!'),
 (1, 'Naledi Leotlela', 'naledi@eventsport.co.za', 'HashedPassword123!'),
 (2, 'Lindiwe Nhlapo', 'lindiwe@gmail.com', 'HashedPassword123!'),
 (2, 'Thato Tsotetsi', 'thato@gmail.com', 'HashedPassword123!');
 
--- Seed Events (3 Events)
 INSERT INTO Events (OrganiserId, Title, Description, Location, EventDate) VALUES
-(1, 'Soweto Half Marathon', 'Annual road running event in Soweto.', 'Soweto, Johannesburg', 
-'2026-11-01 06:00:00'),
-(1, 'Cape Town Cycle Challenge', 'Scenic coastal cycling event.', 'Cape Town, Western Cape', 
-'2026-10-15 07:00:00'),
-(2, 'Durban City Night Run', 'Fun 5km and 10km evening run.', 'Durban North', '2026-12-05 
-18:00:00');
+(1, 'Soweto Half Marathon', 'Annual road running event in Soweto.', 'Soweto, Johannesburg', '2026-11-01 06:00:00'),
+(1, 'Cape Town Cycle Challenge', 'Scenic coastal cycling event.', 'Cape Town, Western Cape', '2026-10-15 07:00:00'),
+(2, 'Durban City Night Run', 'Fun 5km and 10km evening run.', 'Durban North', '2026-12-05 18:00:00');
 
--- Seed Event Categories
 INSERT INTO EventCategories (EventId, CategoryName, DistanceKm, EntryFee) VALUES
 (1, '21km Half Marathon', 21.10, 250.00),
 (1, '10km Road Race', 10.00, 150.00),
@@ -99,14 +92,12 @@ INSERT INTO EventCategories (EventId, CategoryName, DistanceKm, EntryFee) VALUES
 (3, '10km Night Run', 10.00, 120.00),
 (3, '5km Fun Run', 5.00, 80.00);
 
--- Seed Enrolments
 INSERT INTO Enrolments (CategoryId, ParticipantId, PaymentStatus) VALUES
-(1, 3, 'Paid'), -- Lindiwe in Soweto 21km
-(3, 3, 'Paid'), -- Lindiwe in Cape Town 90km
-(2, 4, 'Paid'), -- Thato in Soweto 10km
-(5, 4, 'Paid'); -- Thato in Durban 10km
+(1, 3, 'Paid'),
+(3, 3, 'Paid'),
+(2, 4, 'Paid'),
+(5, 4, 'Paid');
 
--- Seed Results
 INSERT INTO Results (EnrolmentId, FinishTime, OverallPosition, CategoryPosition) VALUES
 (1, '01:45:12', 12, 3),
 (3, '00:42:05', 5, 1);
