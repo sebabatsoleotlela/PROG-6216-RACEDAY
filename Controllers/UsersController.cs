@@ -83,5 +83,61 @@ namespace RaceDay.API.Controllers
 
             return Ok(new { message = "User account deleted successfully." });
         }
+
+        // POST: api/users/register
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Check if email already exists
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            if (existingUser != null)
+                return BadRequest(new { message = "Email is already registered." });
+
+            var user = new User
+            {
+                FullName = dto.FullName,
+                Email = dto.Email,
+                RoleId = dto.RoleId // 1 for Organiser, 2 for Participant (or adjust per your DB)
+            };
+
+            // Hash the password securely
+            user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "User registered successfully!", userId = user.UserId });
+        }
+
+        // POST: api/users/login
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] RegisterDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            if (user == null)
+                return Unauthorized(new { message = "Invalid email or password." });
+
+            // Verify password hash
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
+            if (result == PasswordVerificationResult.Failed)
+                return Unauthorized(new { message = "Invalid email or password." });
+
+            string roleName = user.RoleId == 1 ? "Organiser" : "Participant";
+
+            return Ok(new
+            {
+                message = "Login successful!",
+                userId = user.UserId,
+                fullName = user.FullName,
+                email = user.Email,
+                role = roleName
+            });
+        }
     }
 }
