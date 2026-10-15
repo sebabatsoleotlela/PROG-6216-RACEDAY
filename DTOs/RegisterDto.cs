@@ -2,9 +2,9 @@
 {
     public class RegisterDto
     {
-        public string Username { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string Role { get; set; } = "Participant"; // Allows selecting "Participant" or "Organiser"
+        public int RoleId { get; set; } // 1 for Organiser, 2 for Participant
     }
 }
