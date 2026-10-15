@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using RaceDay.API.DTOs;
 
 namespace RaceDay.API.Controllers
 {
@@ -10,7 +11,6 @@ namespace RaceDay.API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        // Replace 'RaceDayDbContext' with your actual database context class name if it differs
         private readonly RaceDayDbContext _context;
         private readonly PasswordHasher<User> _passwordHasher = new();
 
@@ -19,66 +19,58 @@ namespace RaceDay.API.Controllers
             _context = context;
         }
 
-        // POST: api/auth/register
+        // POST: api/Auth/register
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto model)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Check if email already exists
-            if (await _context.Users.AnyAsync(u => u.Email == model.Email))
-                return BadRequest(new { message = "Email is already registered." });
+            // 1. Check if email already exists (Ensures uniqueness)
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+            if (existingUser != null)
+            {
+                return BadRequest(new { message = "An account with this email already exists." });
+            }
 
+            // 2. Create the user object
             var user = new User
             {
-                FullName = model.FullName,
-                Email = model.Email,
-                RoleId = model.RoleId, // 1 for Organiser, 2 for Participant (matching your DB)
-                CreatedAt = DateTime.Now
+                FullName = dto.FullName,
+                Email = dto.Email,
+                RoleId = dto.RoleId,
+                CreatedAt = DateTime.UtcNow
             };
 
-            // Securely hash the password before saving
-            user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
+            // 3. Hash the password securely
+            user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
 
+            // 4. Save to database
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "User registered successfully!" });
+            return Ok(new { message = "User registered successfully!", userId = user.UserId });
         }
 
-        // POST: api/auth/login
+        // POST: api/Auth/login
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto model)
+        public async Task<IActionResult> Login([FromBody] RegisterDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            // Find user by email
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null)
+            {
                 return Unauthorized(new { message = "Invalid email or password." });
+            }
 
             // Verify the hashed password
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result == PasswordVerificationResult.Failed)
+            {
                 return Unauthorized(new { message = "Invalid email or password." });
+            }
 
-            return Ok(new { message = "Login successful!", userId = user.UserId, email = user.Email });
+            return Ok(new { message = "Login successful!", userId = user.UserId, roleId = user.RoleId, fullName = user.FullName });
         }
-    }
-
-    // DTOs for incoming request payloads
-    public class RegisterDto
-    {
-        public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public int RoleId { get; set; } // Role selection (e.g., Organiser vs Participant)
-    }
-
-    public class LoginDto
-    {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
     }
 }
