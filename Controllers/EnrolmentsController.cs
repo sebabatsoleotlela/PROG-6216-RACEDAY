@@ -28,12 +28,47 @@ namespace RaceDay.API.Controllers
             return Ok(enrolments);
         }
 
+        // GET: api/enrolments/user/5 (View races a specific user joined)
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetUserEnrolments(int userId)
+        {
+            var enrolments = await _context.Enrolments
+                .Where(e => e.UserId == userId)
+                .Include(e => e.EventCategory)
+                .ToListAsync();
+
+            return Ok(enrolments);
+        }
+
         // POST: api/enrolments
         [HttpPost]
-        public async Task<IActionResult> CreateEnrolment([FromBody] Enrolment enrolment)
+        public async Task<IActionResult> CreateEnrolment([FromBody] EnrolDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // 1. Verify user exists
+            var user = await _context.Users.FindAsync(dto.UserId);
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            // 2. Verify category exists
+            var category = await _context.EventCategories.FindAsync(dto.CategoryId);
+            if (category == null)
+                return NotFound(new { message = "Event category not found." });
+
+            // 3. Create the enrolment using the DTO values
+            var enrolment = new Enrolment
+            {
+                UserId = dto.UserId,
+                EventId = dto.EventId,
+                CategoryId = dto.CategoryId,
+                EnrolledAt = DateTime.Now
+            };
+
             _context.Enrolments.Add(enrolment);
             await _context.SaveChangesAsync();
+
             return CreatedAtAction(nameof(GetEnrolments), new { id = enrolment.EnrolmentId }, enrolment);
         }
     }
