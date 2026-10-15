@@ -29,11 +29,12 @@ namespace RaceDay.API.Controllers
         }
 
         // GET: api/enrolments/user/5 (View races a specific user joined)
+        // GET: api/enrolments/user/5 (View races a specific user joined)
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetUserEnrolments(int userId)
         {
             var enrolments = await _context.Enrolments
-                .Where(e => e.UserId == userId)
+                .Where(e => e.ParticipantId == userId)
                 .Include(e => e.EventCategory)
                 .ToListAsync();
 
@@ -57,13 +58,13 @@ namespace RaceDay.API.Controllers
             if (category == null)
                 return NotFound(new { message = "Event category not found." });
 
-            // 3. Create the enrolment using the DTO values
+            // 3. Create the enrolment matching your model properties
             var enrolment = new Enrolment
             {
-                UserId = dto.UserId,
-                EventId = dto.EventId,
+                ParticipantId = dto.UserId,
                 CategoryId = dto.CategoryId,
-                EnrolledAt = DateTime.Now
+                EnrolmentDate = DateTime.Now,
+                PaymentStatus = "Pending"
             };
 
             _context.Enrolments.Add(enrolment);
