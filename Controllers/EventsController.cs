@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using RaceDay.API.DTOs;
 
 namespace RaceDay.API.Controllers
 {
-    [Route("api/events")]
+    [Route("api/[controller]")]
     [ApiController]
     public class EventsController : ControllerBase
     {
@@ -17,9 +17,7 @@ namespace RaceDay.API.Controllers
             _context = context;
         }
 
-
-
-        // GET: api/events
+        // GET: api/Events (Public / Participants view all events)
         [HttpGet]
         public async Task<IActionResult> GetEvents()
         {
@@ -27,16 +25,53 @@ namespace RaceDay.API.Controllers
             return Ok(events);
         }
 
-        // POST: api/events
-        [HttpPost]
-        [Authorize(Roles = "Organiser")]
-        public async Task<IActionResult> CreateEvent([FromBody] Event ev)
+        // GET: api/Events/5 (Get single event details with categories)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetEvent(int id)
         {
-            _context.Events.Add(ev);
+            var raceEvent = await _context.Events
+                .FirstOrDefaultAsync(e => e.EventId == id);
+
+            if (raceEvent == null)
+                return NotFound(new { message = "Event not found." });
+
+            return Ok(raceEvent);
+        }
+
+        // POST: api/Events (Organiser creates an event)
+        [HttpPost]
+        public async Task<IActionResult> CreateEvent([FromBody] CreateEventDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var raceEvent = new Event
+            {
+                EventName = dto.EventName,
+                Location = dto.Location,
+                EventDate = dto.EventDate,
+                Description = dto.Description,
+                OrganiserId = dto.OrganiserId
+            };
+
+            _context.Events.Add(raceEvent);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetEvents), new { id = ev.EventId }, ev);
+
+            return Ok(new { message = "Event created successfully!", eventId = raceEvent.EventId });
+        }
+
+        // DELETE: api/Events/5 (Organiser deletes an event)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteEvent(int id)
+        {
+            var raceEvent = await _context.Events.FindAsync(id);
+            if (raceEvent == null)
+                return NotFound(new { message = "Event not found." });
+
+            _context.Events.Remove(raceEvent);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Event deleted successfully." });
         }
     }
 }
-
-
