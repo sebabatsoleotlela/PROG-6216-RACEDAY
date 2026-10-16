@@ -1,3 +1,11 @@
+
+-- ================================================
+-- RaceDay Database Schema & Seed Script
+-- Module: PROG6212 / PROG6216
+-- Tables: Users, Events, Categories, Enrolments, Results
+-- ================================================
+
+
 -- Create Database
 CREATE DATABASE Race_DayDB;
 GO
